@@ -12,12 +12,14 @@
 //! - within a band, channels in [`CHANNEL_ORDER`], skipping channels with no dots there;
 //! - `ESC ( v` (relative, from the previous band) before a band's first strip only;
 //!   `ESC ( $` (absolute x) before every strip; CR after every strip;
-//! - each strip cropped to its dots: the left edge rounded down to 16 pixels, the width
-//!   rounded up to an even number of bytes, except that a strip whose dots all sit in its
-//!   first byte stays one byte wide.
+//! - each strip cropped to its dots: the left edge rounded down to 16 pixels, the right
+//!   edge at the last byte with dots;
+//! - the strip compressed (mode 5) with its width padded to an even number of bytes, unless
+//!   that would be larger than the raw data, in which case it is sent raw (mode 4) at its
+//!   exact, unpadded width.
 
 use crate::prn::{self, Item, Strip, CR, FF};
-use crate::rle::RleError;
+use crate::rle::{self, RleError};
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -288,14 +290,40 @@ pub fn decode_pages(items: &[Item]) -> Result<Vec<Page>, RasterError> {
 }
 
 /// Garment Creator's crop for one band of one channel, from its first and last byte
-/// columns with dots: returns (first byte column, bytes per line).
+/// columns with dots: returns (first byte column, bytes needed to reach the last dot).
 pub fn crop(first: usize, last: usize, bits: u8) -> (usize, usize) {
     let px_per_byte = 8 / bits.max(1) as usize;
     let align = (X_ALIGN_PX / px_per_byte).max(1);
     let start = first / align * align;
-    let need = last - start + 1;
-    let nb = if need == 1 { 1 } else { need.div_ceil(2) * 2 };
-    (start, nb)
+    (start, last - start + 1)
+}
+
+/// `lines` lines of `nb` bytes from a plane, starting at byte column `bx` (zeros past the
+/// plane's edges).
+fn extract(plane: &Plane, y: usize, lines: usize, bx: usize, nb: usize) -> Vec<u8> {
+    let mut raw = vec![0u8; nb * lines];
+    for l in 0..lines.min(plane.height.saturating_sub(y)) {
+        let row = plane.row(y + l);
+        let end = (bx + nb).min(row.len());
+        if end > bx {
+            raw[l * nb..l * nb + (end - bx)].copy_from_slice(&row[bx..end]);
+        }
+    }
+    raw
+}
+
+/// One strip the way Garment Creator writes it: compressed at an even width, or raw at the
+/// exact width `need` when compressing the padded strip would make it larger.
+pub fn garment_creator_strip(plane: &Plane, y: usize, lines: usize, bx: usize, need: usize, channel: u8, bits: u8) -> Strip {
+    let even = need.div_ceil(2) * 2;
+    let padded = extract(plane, y, lines, bx, even);
+    let packed = rle::encode_strip(&padded, even);
+    let (nb, mode, payload) = if packed.len() > padded.len() {
+        (need, 4, extract(plane, y, lines, bx, need))
+    } else {
+        (even, 5, packed)
+    };
+    Strip { channel, mode, bits, bytes_per_line: nb as u16, lines: lines as u16, flag: Some(0), payload }
 }
 
 /// Turn a page's planes into strip commands the way Garment Creator 2.1.7 does.
@@ -312,20 +340,14 @@ pub fn encode_raster(page: &Page) -> Vec<Item> {
         for &ch in &order {
             let plane = &page.planes[&ch];
             let Some((first, last)) = plane.ink_columns(y, lines) else { continue };
-            let (bx, nb) = crop(first, last, page.bits);
-            let mut raw = vec![0u8; nb * lines];
-            for l in 0..lines.min(plane.height.saturating_sub(y)) {
-                let row = plane.row(y + l);
-                let end = (bx + nb).min(row.len());
-                raw[l * nb..l * nb + (end - bx)].copy_from_slice(&row[bx..end]);
-            }
+            let (bx, need) = crop(first, last, page.bits);
             if first_in_band {
                 items.push(prn::move_down((y - last_y) as i32));
                 last_y = y;
                 first_in_band = false;
             }
             items.push(prn::set_x(bx as u32 * px_per_byte));
-            items.push(Item::Raster(Strip::compress(ch, page.bits, nb as u16, lines as u16, &raw)));
+            items.push(Item::Raster(garment_creator_strip(plane, y, lines, bx, need, ch, page.bits)));
             items.push(Item::Ctl(CR));
         }
     }
@@ -378,14 +400,34 @@ mod tests {
 
     #[test]
     fn crop_matches_garment_creator() {
-        // dots only in the strip's first byte: one byte wide, not rounded up to two
+        // the left edge snaps down to a 16-pixel (4-byte) boundary
         assert_eq!(crop(2464, 2464, 2), (2464, 1));
-        // first dot in byte 2465, last in 2465: start 2464, needs 2 bytes
         assert_eq!(crop(2465, 2465, 2), (2464, 2));
-        // needs 3 bytes: rounded up to 4
-        assert_eq!(crop(2464, 2466, 2), (2464, 4));
-        // needs 18: stays 18
         assert_eq!(crop(2467, 2481, 2), (2464, 18));
+    }
+
+    #[test]
+    fn strips_pad_only_when_compressed() {
+        let mut plane = Plane::new(16, 16);
+        // a speck in one byte: raw, one byte wide
+        plane.row_mut(3)[4] = 0x30;
+        let s = garment_creator_strip(&plane, 0, 16, 4, 1, 63, 2);
+        assert_eq!((s.mode, s.bytes_per_line), (4, 1));
+        // a solid 5-byte run: compressed, padded to 6 bytes
+        let mut solid = Plane::new(16, 16);
+        for y in 0..16 {
+            solid.row_mut(y)[4..9].fill(0xFF);
+        }
+        let s = garment_creator_strip(&solid, 0, 16, 4, 5, 63, 2);
+        assert_eq!((s.mode, s.bytes_per_line), (5, 6));
+        // noise that RLE can't shrink: raw at the exact odd width
+        for y in 0..16 {
+            for x in 4..7 {
+                plane.row_mut(y)[x] = [0x31, 0x8C, 0x47][(x + y) % 3];
+            }
+        }
+        let s = garment_creator_strip(&plane, 0, 16, 4, 3, 63, 2);
+        assert_eq!((s.mode, s.bytes_per_line, s.payload.len()), (4, 3, 48));
     }
 
     fn page_with(planes: Vec<(u8, Plane)>, height: u32) -> Page {

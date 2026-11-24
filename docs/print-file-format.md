@@ -13,9 +13,13 @@ Meanings marked *(likely)* are inferences still to be confirmed.
 A print file is Epson ESC/P2 with Epson's "remote mode" commands. A job on a dark garment
 has two pages, printed one after the other on the same garment:
 
-1. **The white underbase**, on the white ink channel, at 1440 × 1440 dpi.
+1. **The white underbase**, on the white ink channel, at 1440 × 1440 dpi (or 1440 × 720 in
+   the faster white mode).
 2. **The colour**, on the cyan, magenta, yellow and black channels, at 1440 dpi across and
    720 dpi down.
+
+With two white layers there is a second, identical white page before the colour. A job for
+a light garment has only the colour page.
 
 ## Layout
 
@@ -32,12 +36,22 @@ has two pages, printed one after the other on the same garment:
 4. **Thumbnail:** `ESC ( R 0A 00 00 "THUMBNAIL"`, a u32 LE total length, then entries of
    u32 id, u32 length and data.
    - Entry 1 is a 140 × 168 PNG preview of the design.
-   - Entry 2 is a u32 followed by another 140-pixel-wide PNG *(likely a second preview)*.
-5. **Each page** starts with `ESC @`, two remote blocks and `ESC @`:
-   - `EX … 38 0P 00 00`, where P is the page number counting from 1.
-   - `DR 00 40 00 00`, `DR 00 01 00 00`, `IK 00 61` (white page) or `IK 00 01` (colour
-     page), and a 4,775-byte `EX` block that is the same in every job seen so far *(likely
-     calibration or ink curves)*.
+   - Entry 2 is a u32 length, then a 140 × 97 PNG thumbnail of the design alone, then the
+     job's settings as URL-encoded JSON running to the end of the entry. Garment Creator
+     uses those settings to reopen a print file. They include absolute file paths, which is
+     why two saves of the same job are never byte-identical even though their dots are.
+5. **Each page** starts with `ESC @`, its remote blocks and `ESC @`:
+   - In a job with white, a layer marker `EX 00 00 00 00 38 0L 00 00`: L = 1 before the
+     white layer, 2 before each later page, and 0 in the trailer to end the sequence. A
+     colour-only job has no layer markers.
+   - Ink setup: `DR 00 40 00 00`, `DR 00 01 00 00`, then `IK 00 61` for a white page or
+     `IK 00 01` for a colour page, then a 4,775-byte `EX` block.
+     - A second white layer reuses the first white page's setup and sends only the layer
+       marker.
+     - The setup block doesn't change with ink set, ink density or print quality.
+   - The 4,775-byte block is a constant for the printer model. It is Epson's own data, so
+     DTG Creator Max reads it from the owner's existing Garment Creator files instead of
+     shipping it.
 6. **Page setup** (ESC/P2):
 
    | Command | Page 1: white | Page 2: colour |
@@ -45,7 +59,7 @@ has two pages, printed one after the other on the same garment:
    | `ESC ( G` | `01` graphics mode | same |
    | `ESC U` | `00` | same |
    | `ESC ( K` | `00 00` | same |
-   | `ESC ( i` | `01 F0 00` microweave, done in the printer | same |
+   | `ESC ( i` | `01 F0 00` microweave, done in the printer; `01 F3 00` for the 720-dpi white mode | `01 F0 00`, `F1` or `F2` for 8, 10 or 16 passes (the dots are the same) |
    | `ESC ( e` dot size | `00 21` | `00 11` |
    | `ESC ( E` | `00 00` | same |
    | `ESC ( U` units | `08 02 02 40 0B`: base 2880, page 1/360 in, vertical 1/1440, horizontal 1/1440 | `08 04 02 40 0B`: vertical 1/720 |
@@ -78,8 +92,10 @@ has two pages, printed one after the other on the same garment:
 
 ## How Garment Creator writes the raster *(confirmed)*
 
-Decoding three real jobs to dots and writing them again with these rules reproduces each
-file byte for byte (8,115 strips):
+Decoding 88 print files made by Garment Creator's engine to dots and writing them again
+with these rules reproduces every file byte for byte (21,620 strips). They include white
+and colour pages, the 720-dpi white mode, two white layers, colour-only jobs and different
+ink sets.
 
 - **Bands:** 16 lines each, on a fixed grid from the top of the page. Empty bands are
   skipped. The last band stops at the page length from `ESC ( C`.
@@ -88,16 +104,15 @@ file byte for byte (8,115 strips):
 - **Commands:** `ESC ( v` with the distance from the previous band, before each band's first
   strip only. Then for each strip: `ESC ( $` with the absolute x, the `ESC i` strip, and
   `CR`.
-- **Crop:**
-  - The strip starts at the first byte column with dots, rounded down to a multiple of 16
-    pixels (4 bytes).
-  - It runs to the last byte column with dots, with the width rounded up to an even number
-    of bytes.
-  - Exception: a strip whose dots all sit in its first byte stays 1 byte wide.
-- **Compression:** each line is coded on its own, greedily from the left. Runs of 3 or more
+- **Crop:** the strip starts at the first byte column with dots, rounded down to a multiple
+  of 16 pixels (4 bytes). It ends at the last byte column with dots.
+- **Compression:** the strip is padded on the right to an even number of bytes and
+  compressed. Each line is coded on its own, greedily from the left. Runs of 3 or more
   identical bytes become repeat tokens of at most 128 bytes. Everything else is literal, at
   most 127 bytes per token. Runs of 2 stay literal.
-- **Mode:** 5 unless the run-length data would be larger than the raw data, then 4.
+- **Mode:** 5 (compressed, even width) unless the compressed data would be larger than the
+  padded raw data. Then the strip is sent as mode 4, raw, at its exact unpadded width. That
+  happens for tiny specks and for fine, noisy halftones.
 
 ## Job files (.gcr)
 
@@ -125,7 +140,8 @@ numbers (63, 127, 191, 254).
 
 ## Still unknown
 
-- What the remote settings (`JX`, `MI`, `DN`, `DR`, `IK` and the 4,775-byte `EX`) mean, and
-  how they change with print mode, ink set and platen.
+- What `JX`, `MI`, `DN` and `DR` mean. They haven't changed in any job seen so far,
+  including different print modes, ink sets and densities.
+- How the platen size changes the header.
 - Where white goes in the channel order if white and colour ever share a page.
-- Whether an exact tie between raw and compressed size picks mode 4 or 5.
+- Whether an exact tie between compressed and padded raw size picks mode 4 or 5.

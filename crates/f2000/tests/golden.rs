@@ -5,6 +5,8 @@
 //! data. The tests read a private reference set from `$DTG_REFERENCE`, or from `reference/`
 //! at the repository root (git-ignored; a symlink works):
 //! - `prn/*.prn`: print files saved by Garment Creator 2.1.7;
+//! - `refset/*/*.prn`: more print files from Garment Creator's own engine (test images
+//!   with one setting changed at a time);
 //! - `prn/numbatweb-comau-white-lge.prn` and `.gcr`: a matched job and print file;
 //! - `jobs/*.gcr`: older job files;
 //! - `nozzle/H2000_NzlCheck_Wh.prn`: Epson's nozzle-check file.
@@ -30,14 +32,23 @@ fn read_or_skip(path: &Path) -> Option<Vec<u8>> {
     }
 }
 
-fn prn_files() -> Vec<PathBuf> {
-    let dir = reference().join("prn");
-    let mut files: Vec<PathBuf> = std::fs::read_dir(&dir)
+fn prns_in(dir: &Path) -> Vec<PathBuf> {
+    std::fs::read_dir(dir)
         .map(|rd| rd.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().is_some_and(|x| x == "prn")).collect())
-        .unwrap_or_default();
+        .unwrap_or_default()
+}
+
+/// `prn/*.prn`, plus `refset/*/*.prn` (one folder per test image and settings variant).
+fn prn_files() -> Vec<PathBuf> {
+    let mut files = prns_in(&reference().join("prn"));
+    for entry in std::fs::read_dir(reference().join("refset")).into_iter().flatten().flatten() {
+        if entry.path().is_dir() {
+            files.extend(prns_in(&entry.path()));
+        }
+    }
     files.sort();
     if files.is_empty() {
-        eprintln!("skipped: no .prn files in {}", dir.display());
+        eprintln!("skipped: no .prn files in {}", reference().display());
     }
     files
 }
@@ -50,7 +61,6 @@ fn saved_jobs_reproduce_byte_for_byte() {
         let bytes = std::fs::read(&path).unwrap();
         let v = f2000::verify(&bytes).unwrap();
         assert!(v.all_identical(), "{}: {v:?}", path.display());
-        assert!(v.strips > 1000, "{}: only {} strips", path.display(), v.strips);
     }
 }
 
