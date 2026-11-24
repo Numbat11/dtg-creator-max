@@ -16,16 +16,32 @@ No virtual machines, no Wine.
 | Garment Creator job files (`.gcr`) | **Working:** artwork and settings. |
 | Artwork to dots: colour conversion, white underbase, halftoning | Not started. The next big piece. |
 | Sending to the printer over USB or network | Not started. |
-| Desktop app | Not started. |
+| Desktop app ([`crates/dtg-creator-max`](crates/dtg-creator-max)) | **First version.** Opens artwork (PNG, JPEG), Garment Creator jobs and print files; shows the design on a T-shirt and platen with rulers; move and resize it; garment presets and print settings. Printing comes once the two parts above exist. |
 
 The print file format is documented in [`docs/print-file-format.md`](docs/print-file-format.md).
 
-## Build and test
+## Build and run
 
-You need Rust (stable, via [rustup](https://rustup.rs)).
+You need Rust (stable, via [rustup](https://rustup.rs)) and, on Linux, a C compiler
+(`sudo apt install build-essential` on Ubuntu).
 
 ```bash
 cargo build --release
+```
+
+```bash
+./target/release/dtg-creator-max
+```
+
+You can also give it a file to open: `./target/release/dtg-creator-max job.gcr`. In the app,
+use **Open…** (Ctrl/Cmd + O) or drop a file on the window. Opening a print file (`.prn`) shows
+the dots it will actually print, on the matching garment.
+
+The app draws with OpenGL, so it runs on older graphics cards too.
+
+## Command-line tool and tests
+
+```bash
 cargo test
 ```
 

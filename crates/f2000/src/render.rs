@@ -2,15 +2,21 @@
 //! Preview images and ink totals from dot planes.
 //!
 //! Previews are 90 dpi: each preview pixel sums the dots of a 16 x 16 block at 1440 dpi.
-//! A colour-pass line (720 dpi) covers two 1440-dpi rows, so it counts twice.
+//! A colour-pass line (720 dpi) covers two 1440-dpi rows, so it counts twice. The preview
+//! estimates how much fabric the dots cover, which is approximate; the ink totals are exact.
 
 use crate::raster::Page;
 use std::collections::BTreeMap;
 
 /// Preview pixel size in 1440-dpi pixels.
 pub const BLOCK_PX: usize = 16;
-/// Ink in a block where every pixel is a large dot (size 3).
-const FULL_BLOCK: f64 = (BLOCK_PX * BLOCK_PX * 3) as f64;
+/// Dot area per block when every pixel is covered, in [`AREA`] units.
+const FULL_BLOCK: f64 = (BLOCK_PX * BLOCK_PX * 100) as f64;
+/// How much of its pixel each dot size covers on the garment, in percent. Ink spreads, so
+/// even small dots cover most of their pixel. These weights only shape the preview.
+const DOT_AREA: [u16; 4] = [0, 60, 85, 100];
+/// Preview-only gamma for ink spreading into the fabric (1.0 = none).
+const SPREAD: f64 = 1.6;
 
 /// Channel numbers in an F2000 White Edition job.
 pub const BLACK: u8 = 0;
@@ -36,6 +42,17 @@ const INK: [u8; 256] = {
     let mut b = 0;
     while b < 256 {
         t[b] = ((b & 3) + ((b >> 2) & 3) + ((b >> 4) & 3) + ((b >> 6) & 3)) as u8;
+        b += 1;
+    }
+    t
+};
+
+/// Covered area of the four pixels in a byte, in percent of one pixel each (0 to 400).
+const AREA: [u16; 256] = {
+    let mut t = [0u16; 256];
+    let mut b = 0;
+    while b < 256 {
+        t[b] = DOT_AREA[b & 3] + DOT_AREA[(b >> 2) & 3] + DOT_AREA[(b >> 4) & 3] + DOT_AREA[(b >> 6) & 3];
         b += 1;
     }
     t
@@ -90,13 +107,15 @@ pub fn preview(pages: &[Page]) -> Preview {
                 let cells = &mut grid[row * width..(row + 1) * width];
                 for (bx, &b) in plane.row(y).iter().enumerate() {
                     if b != 0 {
-                        cells[bx * 4 / BLOCK_PX] += INK[b as usize] as u32 * vs as u32;
+                        cells[bx * 4 / BLOCK_PX] += AREA[b as usize] as u32 * vs as u32;
                     }
                 }
             }
         }
     }
-    let cov = |ch: u8, i: usize| grids.get(&ch).map_or(0.0, |g| (g[i] as f64 / FULL_BLOCK).min(1.0));
+    let cov = |ch: u8, i: usize| {
+        grids.get(&ch).map_or(0.0, |g| 1.0 - (1.0 - (g[i] as f64 / FULL_BLOCK).min(1.0)).powf(SPREAD))
+    };
     let mut white = Vec::with_capacity(width * height * 3);
     let mut colour = Vec::with_capacity(width * height * 3);
     let mut on_black = Vec::with_capacity(width * height * 3);

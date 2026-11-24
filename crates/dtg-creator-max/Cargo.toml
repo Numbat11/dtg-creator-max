@@ -1,0 +1,13 @@
+[package]
+name = "dtg-creator-max"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# OpenGL (glow) rather than wgpu: it runs on older GPUs, including OpenCore-patched Macs
+eframe = { version = "0.37.0", default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "links", "wayland", "x11"] }
+f2000 = { version = "0.1.0", path = "../f2000" }
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+rfd = "0.18.0"
