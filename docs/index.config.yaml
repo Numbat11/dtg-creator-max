@@ -1,0 +1,70 @@
+# ============================================================
+# Config for scripts/generate-docs-index.ts (pattern from
+# popyalar PRD-114 — docs-index codegen).
+#
+# This is the ONLY hand-edited input to docs/INDEX.md. The index
+# itself is generated — edit this file, then run:
+#
+#   npm run generate:docs-index
+#
+# Drift is blocked at pre-commit by scripts/verify-docs-index.ts.
+#
+# Setup in a new repo (once):
+#   npm i -D tsx js-yaml @types/js-yaml
+#   package.json scripts:
+#     "generate:docs-index": "tsx scripts/generate-docs-index.ts"
+#     "verify:docs-index":   "tsx scripts/verify-docs-index.ts"
+#   Wire verify:docs-index into pre-commit/CI.
+#
+# Folders not listed below are appended in a catch-all "Other docs"
+# section at the end, so nothing is ever silently dropped.
+# ============================================================
+
+# Rendered as "# {project_title} Docs Index" at the top of INDEX.md.
+project_title: "DTG Creator Max"
+
+sections:
+  - folder: "(root)"
+    title: "Root-level reference docs"
+    description: "The first stop for any contributor. Each is a load-bearing reference, not a session log. Start with [KICKOFF-BRIEF.md](KICKOFF-BRIEF.md) → [NEXT-SESSION.md](NEXT-SESSION.md) → [BUGS_BUNNY.md](BUGS_BUNNY.md); the format itself is in [print-file-format.md](print-file-format.md)."
+
+  - folder: "PRDs"
+    title: "PRDs/ — Workflow & decision log"
+    description: "The PRD system's own docs: workflow rules and the append-only decision log."
+
+  - folder: "PRDs/active"
+    title: "PRDs/active/ — Active product specs"
+    description: "Currently being implemented. Newest first."
+
+  - folder: "PRDs/pending"
+    title: "PRDs/pending/ — Backlog specs"
+    description: "Drafted but not yet started. Move to active/ when work begins."
+
+  - folder: "PRDs/completed"
+    title: "PRDs/completed/ — Shipped specs"
+    description: "Spec frozen; the code is in production. Newest first."
+
+  - folder: "PRDs/templates"
+    title: "PRDs/templates/ — PRD templates"
+    description: "Start a new PRD from one of these. Full template for complex features, simple for small ones."
+
+# Manual one-line descriptions that override auto-extraction.
+# Keys are repo-root-relative (docs/...). Use when the auto-extracted
+# first paragraph picks up boilerplate.
+overrides:
+  "docs/KICKOFF-BRIEF.md": "PRD-000 — master planning brief: scope, UI/UX, stack, legal. The first prompt."
+  "docs/print-file-format.md": "The SC-F2000 print-file format and Garment Creator's raster rules, confirmed by golden tests"
+  "docs/NEXT-SESSION.md": "Session handoff — deployed / waiting / needs-a-human. Read first."
+  "docs/BUGS_BUNNY.md": "🐰 Issue tracker — bugs logged mid-session for later resolution"
+  "docs/INDEX.md": "This index — auto-generated, do not edit by hand"
+  "docs/PRDs/README.md": "The PRD workflow — plan → build → validate → record"
+  "docs/PRDs/00_decision_log.md": "Append-only record of what was actually built and why"
+  "docs/PRDs/templates/prd_template.md": "Full PRD template — complex features"
+  "docs/PRDs/templates/prd_simple.md": "Simple PRD template — small features, clear fixes"
+
+# Files matching these patterns are flagged as cleanup candidates
+# at the end of the index (never silently hidden).
+cleanup_patterns:
+  - pattern: " 1\\.md$"
+    label: "macOS duplicate-name conflict file"
+    action: "Review and delete or merge"

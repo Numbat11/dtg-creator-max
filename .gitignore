@@ -8,3 +8,6 @@
 *.icm
 *.icc
 /reference
+
+# docs tooling (npm install)
+node_modules/

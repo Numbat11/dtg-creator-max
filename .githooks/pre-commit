@@ -1,0 +1,8 @@
+#!/bin/sh
+# Blocks a commit whose docs/INDEX.md is stale.
+# Enable once per clone:  git config core.hooksPath .githooks
+if [ ! -d node_modules ]; then
+  echo "pre-commit: docs index not checked (run 'npm install' to enable the check)" >&2
+  exit 0
+fi
+npm run --silent verify:docs-index

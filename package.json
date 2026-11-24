@@ -1,0 +1,16 @@
+{
+  "name": "dtg-creator-max-docs",
+  "private": true,
+  "type": "module",
+  "description": "Docs tooling only: regenerates and checks docs/INDEX.md. The app itself is Rust (see README.md).",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "generate:docs-index": "tsx scripts/generate-docs-index.ts",
+    "verify:docs-index": "tsx scripts/verify-docs-index.ts"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^5.5.0",
+    "tsx": "^4.23.15"
+  }
+}
