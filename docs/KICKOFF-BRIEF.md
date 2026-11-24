@@ -229,18 +229,31 @@
 - [x] Kickoff brief written (this file).
 - [x] Repo bootstrapped from the hybrid-build seed; `CLAUDE.md` filled.
 - [x] Work so far recorded in the decision log (2026-11-24 to 2026-11-25).
-- [ ] Initial PRD set agreed, then written into `PRDs/pending/`. **Proposed:**
-  - PRD-001 — Colour engine: RGB artwork to the F2000's CMYK and white separations,
-    checked against Epson's intermediate images in the private reference set.
-  - PRD-002 — Halftoning: separations to 2-bit dot planes with matching ink density per
-    tone.
-  - PRD-003 — New print files: build complete jobs (header, settings, thumbnail, pages)
-    from dots and settings, reading the Epson data block from the owner's files.
-  - PRD-004 — App: Save print file, Save job and the Print button wired to PRDs 001–003.
-  - PRD-005 — USB sender on Linux, with printer status. Blocked until the printer is
-    available.
-  - PRD-006 — Packaging and CI: Linux first (AppImage or .deb), then macOS and Windows
-    builds.
+- [x] Initial PRD set agreed (2026-11-25) and written into `PRDs/pending/`. Six were
+  proposed. Two were added in front, so the build stays sustainable rather than just
+  feature-complete: engineering foundations, and one safe route for Epson data.
+  - [PRD-001](PRDs/pending/PRD-001-engineering-foundations.md) — Engineering foundations:
+    CI on Linux/macOS/Windows, lints, dependency and licence policy, a pinned toolchain,
+    band streaming for a memory budget. It also sets the **sustainability rules** every
+    PRD follows.
+  - [PRD-002](PRDs/pending/PRD-002-owner-data-import.md) — Owner data import: the Epson
+    files the printer needs, from the owner's own copy, checksum-verified, never shipped.
+  - [PRD-003](PRDs/pending/PRD-003-colour-engine.md) — Colour engine: artwork to ink
+    separations and white, checked stage by stage against Epson's intermediate images.
+  - [PRD-004](PRDs/pending/PRD-004-halftoning.md) — Halftoning: calibrated multi-level
+    blue-noise dots, streamed band by band.
+  - [PRD-005](PRDs/pending/PRD-005-print-file-builder.md) — Print-file builder: complete
+    jobs, byte-identical to Garment Creator's outside documented fields.
+  - [PRD-006](PRDs/pending/PRD-006-app-save-and-print.md) — App: background work (fixes
+    BUG-001), Save print file, Save job (`.gcr`), Print.
+  - [PRD-007](PRDs/pending/PRD-007-printer-connection.md) — Printer connection: USB on
+    Linux through the kernel's printer device, plus network. The hardware steps are
+    blocked until the printer is available.
+  - [PRD-008](PRDs/pending/PRD-008-packaging-and-releases.md) — Packaging and releases:
+    `.deb` for Ubuntu, then macOS and Windows, with checksums, an embedded dependency list
+    and provenance.
+  - **Build order:** 001 → 002 → 005 (testable with decoded reference dots) → 003 → 004 →
+    006 → 007. 008 can ship early as an installable viewer.
 - [x] Validation gates: `cargo build --release`, `cargo test` (unit tests plus golden tests
   against the private reference set), and a headless screenshot of the app
   (`dtg-creator-max <file> --screenshot out.png`).

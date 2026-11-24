@@ -32,6 +32,43 @@ mattered. For each: what was chosen, what was rejected, and WHY — the why is t
 
 -->
 
+## 2026-11-25 — Initial PRD set written; sustainability rules adopted (planning, no code)
+
+**What shipped.** PRD-001 to PRD-008 in `PRDs/pending/`, listed with a build order in
+the kickoff brief §14.
+
+**Implementation.**
+- **The six proposed PRDs became eight.** Two were added in front:
+  - engineering foundations (PRD-001: CI on three OSes, lints, licence policy, a pinned
+    toolchain, a memory budget);
+  - owner data import (PRD-002: the only path by which Epson files reach the app).
+  The proposals had never been written down, so renumbering broke no PRD-number rule.
+- **The sustainability rules** live in PRD-001 and apply to all PRDs:
+  1. long-lived code (small crates, pure functions, tests as the specification, no
+     `unsafe`);
+  2. a small pure-Rust dependency tree with GPL-compatible licences;
+  3. hardware efficiency (10-year-old machines, band streaming);
+  4. energy efficiency (no polling or telemetry);
+  5. reproducible, auditable releases;
+  6. accessibility.
+- **Technical choices made at planning time** (each PRD records its reasons):
+  - `moxcms` for colour, because it's pure Rust and already in the tree;
+  - multi-level blue-noise dithering over error diffusion, because it parallelises,
+    streams and is deterministic;
+  - the kernel's `usblp` device on Linux over libusb or CUPS, because it needs no
+    dependencies;
+  - `.gcr` as the saved-job format over a new format;
+  - `cargo-dist` with `cargo-deb` for releases.
+- **Building PRD-005 before PRD-003/004** is possible because it's tested against decoded
+  reference dots.
+
+**Bugs caught / traps worth remembering.** Writing the PRDs exposed three gaps in the
+private reference set, all needing macOS before the iMac is wiped: the two unconfirmed
+presets, colour-adjustment variants, and platens other than medium. They're listed in
+NEXT-SESSION.
+
+**Open.** Everything; this is planning.
+
 ## 2026-11-25 — Project docs in the Numbat hybrid build structure (no PRD)
 
 **What shipped.**

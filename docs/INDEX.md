@@ -5,7 +5,7 @@
 > Drift is blocked at pre-commit by `scripts/verify-docs-index.ts`.
 
 **Last Generated:** 2026-11-24
-**Total Documents:** 8
+**Total Documents:** 16
 
 ---
 
@@ -29,11 +29,18 @@ The freshest activity — useful for "what's on the founder's mind right now?":
 | 2026-11-25 | [print-file-format.md](print-file-format.md) | The SC-F2000 print-file format and Garment Creator's raster rules, confirmed by golden tests |
 | 2026-11-25 | [PRDs/templates/prd_template.md](PRDs/templates/prd_template.md) | Full PRD template — complex features |
 | 2026-11-25 | [PRDs/templates/prd_simple.md](PRDs/templates/prd_simple.md) | Simple PRD template — small features, clear fixes |
+| 2026-11-25 | [PRDs/pending/PRD-008-packaging-and-releases.md](PRDs/pending/PRD-008-packaging-and-releases.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-007-printer-connection.md](PRDs/pending/PRD-007-printer-connection.md) | Everything else can be built and tested without it. |
+| 2026-11-25 | [PRDs/pending/PRD-006-app-save-and-print.md](PRDs/pending/PRD-006-app-save-and-print.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-005-print-file-builder.md](PRDs/pending/PRD-005-print-file-builder.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-004-halftoning.md](PRDs/pending/PRD-004-halftoning.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-003-colour-engine.md](PRDs/pending/PRD-003-colour-engine.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-002-owner-data-import.md](PRDs/pending/PRD-002-owner-data-import.md) | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| 2026-11-25 | [PRDs/pending/PRD-001-engineering-foundations.md](PRDs/pending/PRD-001-engineering-foundations.md) | 1. **Context is King**: include all necessary documentation, examples and caveats. |
 | 2026-11-25 | [PRDs/README.md](PRDs/README.md) | The PRD workflow — plan → build → validate → record |
 | 2026-11-25 | [PRDs/00_decision_log.md](PRDs/00_decision_log.md) | Append-only record of what was actually built and why |
 | 2026-11-25 | [NEXT-SESSION.md](NEXT-SESSION.md) | Session handoff — deployed / waiting / needs-a-human. Read first. |
 | 2026-11-25 | [KICKOFF-BRIEF.md](KICKOFF-BRIEF.md) | PRD-000 — master planning brief: scope, UI/UX, stack, legal. The first prompt. |
-| 2026-11-25 | [BUGS_BUNNY.md](BUGS_BUNNY.md) | 🐰 Issue tracker — bugs logged mid-session for later resolution |
 
 ---
 
@@ -58,6 +65,23 @@ The PRD system's own docs: workflow rules and the append-only decision log.
 |----------|--------------|---------|
 | [00_decision_log.md](PRDs/00_decision_log.md) | 2026-11-25 | Append-only record of what was actually built and why |
 | [README.md](PRDs/README.md) | 2026-11-25 | The PRD workflow — plan → build → validate → record |
+
+---
+
+## PRDs/pending/ — Backlog specs (8)
+
+Drafted but not yet started. Move to active/ when work begins.
+
+| Document | Last Updated | Purpose |
+|----------|--------------|---------|
+| [PRD-001-engineering-foundations.md](PRDs/pending/PRD-001-engineering-foundations.md) | 2026-11-25 | 1. **Context is King**: include all necessary documentation, examples and caveats. |
+| [PRD-002-owner-data-import.md](PRDs/pending/PRD-002-owner-data-import.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| [PRD-003-colour-engine.md](PRDs/pending/PRD-003-colour-engine.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| [PRD-004-halftoning.md](PRDs/pending/PRD-004-halftoning.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| [PRD-005-print-file-builder.md](PRDs/pending/PRD-005-print-file-builder.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| [PRD-006-app-save-and-print.md](PRDs/pending/PRD-006-app-save-and-print.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
+| [PRD-007-printer-connection.md](PRDs/pending/PRD-007-printer-connection.md) | 2026-11-25 | Everything else can be built and tested without it. |
+| [PRD-008-packaging-and-releases.md](PRDs/pending/PRD-008-packaging-and-releases.md) | 2026-11-25 | 1. **Context is King** · 2. **Validation Loops** · 3. **Information Dense** · |
 
 ---
 
