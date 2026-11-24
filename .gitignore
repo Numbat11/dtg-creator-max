@@ -1,0 +1,10 @@
+/target
+
+# Print files, job files and printer profiles are never committed: they can hold
+# customers' artwork or manufacturer data. Keep reference sets outside the repo and
+# point DTG_REFERENCE at them.
+*.prn
+*.gcr
+*.icm
+*.icc
+/reference

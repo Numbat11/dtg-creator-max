@@ -1,0 +1,16 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/Numbat11/dtg-creator-max"
+
+# The golden tests decode 20-60 MB print files; unoptimised builds are too slow for that.
+[profile.test]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1

@@ -1,0 +1,12 @@
+[package]
+name = "f2000"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Read, render and write Epson SC-F2000 print files (.prn) and Garment Creator job files (.gcr)"
+publish = false
+
+[dependencies]
+# Pure-Rust deflate, used only to write preview PNGs.
+miniz_oxide = "0.8"
